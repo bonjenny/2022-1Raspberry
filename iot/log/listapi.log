@@ -1,0 +1,8 @@
+{sid:20185091,sensor:distance,value:93.47,epoch:1655815653}
+{sid:20181841,sensor:distance,value:35.03,epoch:1655815653}
+{sid:20202284,sensor:거리,value:14.79,epoch:1655815653}
+{sid:20200729,sensor:온도,value:25.0,epoch:1655815653}
+{sid:20202864,sensor:온도,value:29,epoch:1655815653}
+{sid:20201576,sensor:초음파,value:76.24,epoch:1655815654}
+{sid:20202888,sensor:초음파 센서,value:1193.76,epoch:1655815659}{{sid:20200934,sensor:초음파,value:3.5,epoch:1655815780}
+{sid:20200968,sensor:거리,value:52.72,epoch:1655815780}{{sid:20185083,sensor:초음파,value:16.07,epoch:1655815969}

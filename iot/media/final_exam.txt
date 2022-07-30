@@ -1,0 +1,218 @@
+# 1단계 - 환경꾸미기
+
+1. RPi를 포트포워딩하고 인터넷에서 접속 가능하도록 함
+
+<RPi에서>
+upnpc -l: 다른 사람이 사용중인 포트 확인 및 local LAN IP와 External IP 주소 확인
+upnpc -a 192.168.200.93 22 20224 TCP: <local IP>를 <RPi SSH port> 통해 <공유기 port>와 연결
+<또는> upnpc -a 192.168.200.93 80 80224 TCP: <local IP>를 <RPi 웹 서버 port> 통해 <공유기 port>와 연결
+ssh pi@223.194.166.220 -p 20224: <외부 IP>와 <UPNPC port> ssh 연결
+1234: RPi 비밀번호 입력
+
+<컴퓨터에서>
+putty.exe 실행 후 ip에 223.194.166.220, port에 20224 입력
+login as: pi, pw: 1234로 로그인
+<또는>
+notepad++ 실행 후 플러그인 > NppFTP 선택
+톱니바퀴 모양 > Profile Settings > New Profile
+223.194.166.220 SFTP
+20224
+pi
+1234
+로 저장하고 접속 플러그 모양 누름
+
+
+2. RPi에 웹서버와 PHP 서버를 설치하고 대표 API(예, s10.php)를 만들고
+
+<웹서버 설치 및 프로젝트 환경 구성(미설치시)>
+
+- 웹서버 설치
+sudo apt-get update
+sudo apt-get -y install apache2
+
+- 웹서버 환경 조정
+sudo sed -i \
+'s/DocumentRoot \/var\/www\/html/DocumentRoot \/var\/www/' \
+/etc/apache2/sites-enabled/000-default.conf
+
+- 웹계정 사용자 권한 추가
+sudo usermod -a -G www-data pi
+sudo usermod -a -G pi www-data
+
+- php 서버 추가
+sudo apt-get -y install php libapache2-mod-php
+
+- 웹서버 프로젝트 환경 구성하기
+mkdir -p ~/iot
+chmod 775 ~/iot
+sudo ln -s ~/iot /var/www/iot
+ls -l /var/www/iot
+
+
+<서비스 API 프로그램>
+
+- iot/s01.php 생성 및 코드 작성
+wget --post-data="func=test" http://localhost/iot/s01.php -O a.json
+cat a.json
+* {"data":"No service[test].","status":"error"} 출력 확인
+
+- RPi 웹 브라우저에서 테스트하기
+http://localhost/iot/s01.php
+
+- iot/s01_service.php 생성 및 코드 작성
+wget --post-data="func=test" http://localhost/iot/s01.php -O a.json
+cat a.json
+* {"data":"(test)::1->::1","status":"success"} 출력 확인
+
+- iot/c01_test.html 생성 및 코드 작성
+http://localhost/iot/c01_test.html
+웹 페이지에서 접속 후 테스트
+
+- iot/c01_test.py 생성 및 코드 작성
+python3 c01_test.py
+
+- 서버모듈 PHP코드 오류 모니터링
+tail -f /var/log/apache2/error.log
+tail -f /var/log/apache2/error.log | sed 's/\\n/\n/g'
+
+- iot/c01_test2.html 생성 및 코드 작성
+http://localhost/iot/c01_test2.html
+웹 페이지에서 접속 후 테스트
+
+- iot/c01_test3.html 생성 및 코드 작성
+http://localhost/iot/c01_test3.html
+웹 페이지에서 접속 후 테스트 (test2.html과 같은 결과)
+
+- POST를 재사용하기 위한 iot/service.base.js 파일 생성 및 코드 작성
+테스트하기 위한 페이지 iot/c01_test4.html 생성 및 코드 작성
+http://localhost/iot/c01_test4.html
+웹 페이지에서 접속 후 테스트 (test3.html과 같은 결과)
+
+- iot/s01_service.php 수정, create기능 추가
+wget --post-data="func=create&sid=222&api=localhost" http://localhost/iot/s01.php -O a.json
+cat a.jso
+* {"data":"222","status":"success"} 출력 확인
+cat iot/log/api.json
+* {"222":{"sid":"222","api":"localhost"}} 출력 확인
+
+- iot/c01_create.html 생성 및 코드 작성
+http://localhost/iot/c01_create.html
+웹 페이지에서 접속 후 테스트
+UID에 333, API에 http://localhost 입력
+Done: 333/success 출력 확인
+
+- iot/s01_service.php 수정, testapi기능 추가
+wget --post-data="func=testapi&sid=222&spi=localhost" http://localhost/iot/s01.php -O a.json
+cat a.json
+* {"data":false,"status":"success"} 출력 확인
+wget --post-data="func=testapi&sid=222&api=http://localhost/iot/s01.php" http://localhost/iot/s01.php -O a.json
+cat a.json
+* {"data":"{\"data\":\"(test)::1->::1\",\"status\":\"success\"}","status":"success"} 출력 확인
+
+- iot/s01_service.php 수정, listapi기능 추가
+wget --post-data="func=listapi" http://localhost/iot/s01.php -O a.json
+cat a.json
+* {"data":[{"sid":"222","api":"localhost"},{"sid":"333","api":"http:\/\/localhost"}],"status":"success"} 출력 확인
+
+- iot/s01_service.php 수정, deleteapi기능 추가
+wget --post-data="func=deleteapi&sid=222" http://localhost/iot/s01.php -O a.json
+cat a.json
+* {"data":"222","status":"success"} 출력 확인
+
+- iot/c01_create.html 수정, 삭제 기능 추가
+* 삭제 버튼 클릭 시 "Delete: 333/success" 출력 확인
+
+- iot/s01_service.php 수정, upload 기능 추가
+sudo apt install curl
+curl -F "func=upload" -F "file=@c01_upload.html" localhost/iot/s01.php
+ls -l media
+
+
+3. 대표 API에서 func:test POST하면 클라이언트 IP와 서버 IP를
+   "(test)192.168.10.103->192.168.10.101" 형식으로 제공하도록 한다.
+   
+4. 대표 API를 인터넷 평가 가능하도록 지정 서버 정보 등록한다.
+
+# 2단계 - 정보 제공하기
+
+5. 대표 API에서 func:getsensor POST하면 식별번호(학번)을
+   "20220011"와 같은 형식으로 제공
+   
+6. 대표 API에서 func:getlog POST하면 센서 이름과 현재 센서 값을
+   {"sensor":"습도", "value":66}와 같은 형식으로 제공
+   
+7. 대표 API에서 func:getlog POST하면 12시간 측정 기록을
+   {"1653544423":67, "1653544523":50}와 같은 형식으로 제공
+
+# 3단계 - 정보 수집하기
+
+8. 학생 RPi는 강사 서버로부터 등록된 학생 API 목록(func:listapi)을 조회하여
+   [{"sid":"yshan", "api":"http://192.168.10.101/iot/s01.php"},
+    {"sid":"yshan2", "api":"http://122.37.2133:28103/iot/s01.php"},
+    {"sid":"yshan3", "api":"http://122.37.2133:28000/iot/s01.php"}]의 정보를 수집하고
+
+9. api목록을 이용하여 접속하여 func:getuid, func:getsensor를 사용하여
+   sid, sensor, value, epoch을 10개 이상 수집하여 저장하기
+   ** epoch는 unix timestamp로 PHP: tise()로 확인가능
+
+10. 대표 API에서 func:collection POST하면 수집결과를
+   [{"sid":"202200011", "sensor":"습도", "value":66, "epoch":"1653544423"},
+    {"sid":"202200012", "sensor":"온도", "value":66, "epoch":"1653544424"},
+    {"sid":"202200014", "sensor":"거리", "value":66, "epoch":"1653544425"}]과 같은 형식으로 제공
+
+참조: 온라인 11, 12, 13주차 실습 및 동영상 참조
+깃허브 소스 참조
+https://github.com/iot-makers-code/IoT_prototype/tree/main/Code/L029.%EB%8D%B0%EC%9D%B4%ED%84%B0%20%EC%88%98%EC%A7%91%20%EC%84%9C%EB%B2%84%20%EB%A7%8C%EB%93%A4%EA%B8%B0
+
+
+# 웹서버 & PHP 오류 추적 방법
+
+1) Apache 웹서버 및 php 동작 감시
+tail -f /var/log/apache2/error.log
+
+2) php 코드에서 텍스트 자료를 로그로 출력하는 방법
+error_log("출력 내용"); - TEXT 문장 출력하기
+$a = array("name"=>"sam", "age"=>26); - Array 정보 출력하기
+$text = print_r(array, true);
+error_log($text);
+var_dump($a); - 변수 내용을 응답 값으로 출력
+* isset($a["sam"]); // "sam" 값의 array 항목 유무 검사 가능
+
+3) php 코드에서 잦은 오류 유형
+- ;(세미콜론)으로 코드 구문의 끝을 표시하지 않은 경우
+- null: 오브젝트가 초기화 또는 값이 없는 경우
+- (), [], {}, "", '' 등 짝이 맞지 않은 경우
+- $ 기호를 변수에 붙이지 않은 경우
+- index 또는 key가 array에 없는 경우 (warning)
+
+4) 웹화면으로 오류를 표시하는 방법
+php.ini 파일에서 display_errors = On으로 수정
+* ajax로 데이터를 받는 경우 주의 필요
+
+
+# HTML & JS의 오류 추적 방법
+
+1) 웹 브라우저의 감시(inspection)기능 활용
+- 참조 내용
+웹에 사용하는 파일 내역 및 수신 상태
+Console에 HTML, JavaScript의 상태 표시
+JavaScript의 breakpoint 설정과 debugging step trace
+JavaScript 내 변수 값
+HTML element의 Attributes 상태 등
+
+2) JS에서 console에 기록 남기기
+- TEXT 문장 출력하기
+console.log("출력 내용");
+- Array 정보 출력하기
+a = ['name':'sam', 'age':26]
+console.log("name is" + a.name)
+console.log("name is" + a['name'])
+
+3) JS에서 잦은 오류 유형
+- (), [], {}, "", '' 등 짝이 맞지 않은 경우
+- null: 오브젝트가 초기화 또는 값이 없는 경우
+- string => int 변경 오류 변수의 유형이 다른 경우
+* parseInt(), parseFloat(), number()를 사용하여 변경하기
+
+4) JS에서 alert로 확인하기
+alert("출력 내용")

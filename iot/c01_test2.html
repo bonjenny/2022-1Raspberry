@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<body>
+  <div>
+	 <input type="button" value="Submit" onclick="test();">
+  </div>
+  <div id='result'></div>
+</body>
+<script>
+var test = function () {
+	var data = new FormData();
+	data.append('func', 'test'); //func를 test로
+	var request = new XMLHttpRequest(); //HTTP 통신
+	request.onreadystatechange = function() {
+		if(request.readyState == 4) {
+			try { var resp = JSON.parse(request.response); }
+			catch (e) {
+			   var resp = { //수신 결과
+				  status: 'error',
+				  data: 'Unknown error : [' + request.responseText + ']'
+				};
+			}
+			console.log(resp.status + ': ' + resp.data);
+			document.getElementById('result').innerHTML 
+					= "Done: "+resp.data+ '/' + resp.status
+		}
+	};
+	request.open('POST', "s01.php" );
+	request.send(data);
+}
+</script>
+</html>

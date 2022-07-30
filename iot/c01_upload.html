@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="kr"><!-- 한글 기본 사용 --> 
+<head>
+  <script src="./service.base.js"></script>
+</head>
+<body>
+	<input type = 'file' id='_file'/>
+	<input type = 'button' onclick='upload();' value='Upload!'/>
+</body>
+<script>
+var upload = function () {
+	var data = new FormData();
+	data.append('func', 'upload');
+	data.append('file',
+		document.getElementById("_file").files[0]);
+	POST('s01.php', data, function(resp) {
+		console.log("file upload");
+	});
+}
+</script>
+</html>

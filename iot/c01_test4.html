@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <script src="./service.base.js"></script>
+</head>
+<body>
+  <div>
+	 <input type="button" value="Submit"  onclick="test();">
+  </div>
+  <div id='result'></div>
+
+</body>
+<script>
+var test = function () {
+	var data = new FormData();
+	data.append('func', 'test');
+	POST("s01.php", data, function(resp) {
+			console.log(resp.status + ': ' + resp.data);
+			document.getElementById('result').innerHTML 
+					= "Done: "+resp.data+ '/' + resp.status
+	});
+}
+</script>
+</html>

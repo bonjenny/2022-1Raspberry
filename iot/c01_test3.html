@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<body>
+  <div>
+	 <input type="button" value="Submit" onclick="test();">
+  </div>
+  <div id='result'></div>
+</body>
+<script>
+var POST = function(api, data, func) {
+	var request = new XMLHttpRequest();
+	request.onreadystatechange = function() {
+		if(request.readyState == 4) {
+			try {
+				var resp = JSON.parse(request.response);
+			} catch (e) { //응답과정 오류 및 메시지 오류 시
+			   var resp = {
+				  status: 'error',
+				  data: 'Unknown error : [' 
+						  + request.responseText + ']'
+				};
+				alert(request.responseText)
+			}
+			func(resp)
+		}
+	};
+	request.open('POST', api); //정상적 수신
+	request.send(data);
+	return request
+}
+
+var test = function() { //test 함수
+	var data = new FormData();
+	data.append('func', 'test');
+	POST("s01.php", data, function(resp) {
+			console.log(resp.status + ': ' + resp.data);
+			document.getElementById('result').innerHTML 
+					= "Done: "+resp.data+ '/' + resp.status
+	});
+}
+</script>
+</html>

@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="kr"><!-- 한글 기본 사용 --> 
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">   
+  <title>API등록</title>
+  <script src="./service.base.js"></script>
+</head>
+<body>
+   <div>
+	 API 등록화면:<br>
+	 UID: <input id="sid" type = "text" style="width:6em;"/><br>
+	 API: <input id="api" type = "text" style="width:13em;"/><br>
+	 <!-- 입력 항목을 UID, API로 지정하여 입력 --> 
+	 <input type = "button" value="등록" onclick="create();"/>
+	 <input type = "button" value="테스트" onclick="testapi();"/>
+	 <input type = "button" value="목록" onclick="listapi();"/>
+   </div>
+   <div id="result" style="color:red"></div>
+</body>
+<script>
+var objById = function(id) {
+	return document.getElementById(id)
+}
+var create = function () {
+	var data = new FormData();
+	data.append('func', 'create');
+	data.append('sid', objById('sid').value);
+	data.append('api', objById('api').value);
+	POST('s01.php', data, function(resp) {
+		console.log(resp.status + ': ' + resp.data);
+		objById('result').innerHTML 
+				= "Done :"+resp.data+"/"+resp.status
+	});
+}
+var testapi = function () {
+	var data = new FormData();
+	data.append('func', 'testapi');
+	data.append('api', objById('api').value);
+	POST('s01.php', data, function(resp) {
+		console.log(resp.status + ': ' + resp.data);
+		objById('result').innerHTML 
+				= "Test :"+resp.data+"/"+resp.status
+	});
+}
+var listapi = function () {
+	var data = new FormData();
+	data.append('func', 'listapi');
+	POST('s01.php', data, function(resp) {
+		console.log(resp.status + ': ' + resp.data);
+		objById('result').innerHTML = ""
+		for (i=0;i<resp.data.length;i++) {
+			//div 생성
+			div = document.createElement('DIV')
+			div.id = resp.data[i].sid
+			div.innerHTML = "SID["+resp.data[i].sid 
+					  + "], API[" + resp.data[i].api + "]"
+			//버튼 생성          
+			btn = document.createElement('INPUT')
+			btn.type = "button"
+			btn.value = "삭제"
+			btn.dataset.sid = resp.data[i].sid
+			btn.onclick = function(){deleteapi(this.dataset.sid); }
+			div.appendChild(btn) // div에 버튼 추가
+			
+			console.log(resp.data[i].sid)
+			objById('result').appendChild(div) // 목록에 div 추가
+		}
+	});
+}
+var deleteapi = function (sid) {
+	alert("remove :"+sid);
+	var data = new FormData();
+	data.append('func', 'deleteapi');
+	data.append('sid', sid);
+	POST('s01.php', data, function(resp) {
+		console.log(resp.status + ': ' + resp.data);
+		objById('result').innerHTML 
+				= "Delete :"+resp.data+"/"+resp.status
+	});
+}
+</script>
+</html>

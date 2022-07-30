@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+    <body>
+        <div>
+            Name: <input id="name" type="text" /><br />
+            Age: <input id="age" type="text" /><br />
+            <input type="button" value="submit" onclick="ajax();" />
+        </div>
+        <div id="result" style="color: red;"></div>
+    </body>
+    <script>
+        var ajax = function() {
+            var data = new FormData();
+	    data.append('func', 'whois');
+	    data.append('name', document.getElementById('name').value);
+	    data.append('age', document.getElementById('age').value);
+	    var request = new XMLHttpRequest();
+	    request.onreadystatechange = function() {
+		    if(request.readyState == 4) {
+			try { var resp = JSON.parse(request.response); }
+			catch(e) {
+			    var resp = {
+				status: 'error',
+				data: 'Unknown error: ['
+				     + request.responseText + ']'
+			    };
+			}
+			console.log(resp.status + ': ' + resp.data.length);
+			document.getElementById('result').innerHTML
+			    = "Welcome " + resp.data.name + "<br /> \n"
+			    + "You are " + resp.data.age + " years old.";
+		    }
+	    };
+	    request.open('POST', "service.php", true); // 수정
+	    request.send(data);
+        }
+    </script>
+</html>
